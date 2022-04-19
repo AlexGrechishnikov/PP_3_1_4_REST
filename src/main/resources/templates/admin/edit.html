@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>User edit page</title>
+</head>
+<body>
+<div>
+    <form th:action="@{/logout}" method="POST">
+        <input type="submit" value="Выйти"/>
+    </form>
+    <form th:method="PATCH" th:action="@{/admin}" th:object="${user}" >
+        <input type="hidden" th:field="*{id}">
+        <label for="name">Name</label>
+        <br/>
+        <input type="text" th:field="*{name}" id="name">
+        <div style="color: darkred" th:if="${#fields.hasErrors('name')}" th:errors="*{name}">Name errors</div>
+
+        <br/>
+        <label for="last_name">Last Name</label>
+        <br/>
+        <input type="text" th:field="*{lastName}" id="last_name">
+        <div style="color: darkred" th:if="${#fields.hasErrors('lastName')}" th:errors="*{lastName}">Lastname errors</div>
+
+        <br/>
+        <label for="age">Age</label>
+        <br/>
+        <input type="number" th:field="*{age}" id="age" min="0" max="127">
+        <div style="color: darkred"  th:if="${#fields.hasErrors('age')}" th:errors="*{age}">Age errors</div>
+
+        <br/>
+        <br/>
+        <input type="submit" value="Edit">
+    </form>
+    <br/>
+    <form th:method="DELETE" th:action="@{/admin/{id}(id=${user.getId()})}" th:object="${user}">
+        <input type="submit" value="Delete">
+    </form>
+</div>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Create user</title>
+</head>
+<body>
+<div>
+    <form th:action="@{/logout}" method="POST">
+        <input type="submit" value="Выйти"/>
+    </form>
+    <form th:method="POST" th:action="@{/admin}" th:object="${user}">
+        <label for="name">Name</label>
+        <br/>
+        <input type="text" th:field="*{name}" id="name" placeholder="Name">
+        <div style="color: darkred" th:if="${#fields.hasErrors('name')}" th:errors="*{name}">Name errors</div>
+        <br/>
+        <label for="last_name">Фамилия</label>
+        <br/>
+        <input type="text" th:field="*{lastName}" id="last_name" placeholder="Фамилия">
+        <div style="color: darkred" th:if="${#fields.hasErrors('lastName')}" th:errors="*{lastName}">LastName errors
+        </div>
+        <br/>
+        <label for="age">Age</label>
+        <br/>
+        <input type="number" th:field="*{age}" id="age" placeholder="age" max="127">
+        <div style="color: darkred" th:if="${#fields.hasErrors('age')}" th:errors="*{age}">Age errors</div>
+        <br/>
+        <label for="email">Email</label>
+        <br/>
+        <input type="email" th:field="*{email}" id="email" placeholder="Em@il">
+        <div style="color: darkred" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">Email errors</div>
+        <br/>
+        <label for="password">Password</label>
+        <br/>
+        <input type="password" th:field="*{password}" id="password" placeholder="password" max="30" min="2">
+        <div style="color: darkred" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">Password errors
+        </div>
+        <br/>
+        <br/>
+        <label for="roles">Roles</label>
+        <ul>
+            <li th:each="role : *{roles}" id="roles">
+                <input type="checkbox" th:field="*{roles}" th:value="${role}"/>
+                <label th:for="${#ids.prev('roles')}" th:text="${role}">RED</label>
+            </li>
+        </ul>
+        <input type="submit" value="Add">
+        <br/>
+
+
+    </form>
+</div>
+</body>
+</html>
