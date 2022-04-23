@@ -1,5 +1,7 @@
 package ru.kata.spring.boot_security.demo.controller;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.validation.BindingResult;
@@ -17,67 +19,54 @@ import java.util.Set;
 public class AdminController {
 
     private final UserService userService;
+    private final PasswordEncoder encoder;
 
-    public AdminController(UserService userService) {
+    public AdminController(UserService userService, PasswordEncoder encoder) {
         this.userService = userService;
+        this.encoder = encoder;
     }
 
     @GetMapping()
-    public String getUsers(ModelMap model) {
+    public String getUsers(ModelMap model, Authentication authentication) {
         List<User> users = userService.getUsersList();
+        User principal = (User) authentication.getPrincipal();
+        model.addAttribute("user", principal);
         model.addAttribute("users", users);
-        return "admin/users";
-    }
-
-    @GetMapping(value = "/{id}")
-    public String getUser(ModelMap model, @PathVariable(name = "id") long id) {
-        User user = userService.get(id);
-        model.addAttribute(user);
-        return "admin/user";
-    }
-
-    @GetMapping(value = "/new")
-    public String getNewUser(@ModelAttribute("user") User user) {
-        user.setRoles(userService.getAvailableRoles());
-        return "admin/new";
+        User e = new User();
+        e.setRoles(userService.getAvailableRoles());
+        model.addAttribute("e", e);
+        return "adminPage";
     }
 
     @PostMapping()
-    public String addUser(@ModelAttribute("user") @Valid User user, BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
-            user.setRoles(userService.getAvailableRoles());
-            return "admin/new";
-        }
+    public String addUser(@ModelAttribute("e") @Valid User user, BindingResult bindingResult) {
         Set<Role> roles = userService.getAvailableRoles();
         roles.retainAll(user.getAuthorities());
         user.setRoles(roles);
+        user.setPassword(encoder.encode(user.getPassword()));
         userService.add(user);
         return "redirect:/admin";
     }
 
-    @GetMapping("/{id}/edit")
-    public String getEditUser(ModelMap modelMap, @PathVariable("id") long id) {
-        modelMap.addAttribute("user", userService.get(id));
-        return "admin/edit";
-    }
-
     @PatchMapping()
-    public String updateUser(@ModelAttribute(name = "user") @Valid User user, BindingResult bindingResult) {
-        if (bindingResult.hasFieldErrors("name")
-        || bindingResult.hasFieldErrors("lastName")
-        || bindingResult.hasFieldErrors("age")) {
-            return "admin/edit";
+    public String updateUser(@ModelAttribute(name = "e") @Valid User e, BindingResult bindingResult) {
+        User saved = userService.get(e.getId());
+        saved.setAge(e.getAge());
+        saved.setName(e.getName());
+        saved.setLastName(e.getLastName());
+        saved.setEmail(e.getEmail());
+        if (!e.getPassword().isEmpty()) {
+            saved.setPassword(encoder.encode(e.getPassword()));
         }
-        User saved = userService.get(user.getId());
-        saved.setAge(user.getAge());
-        saved.setName(user.getName());
-        saved.setLastName(user.getLastName());
+        Set<Role> roles = userService.getAvailableRoles();
+        roles.retainAll(e.getAuthorities());
+        saved.setRoles(roles);
         userService.update(saved);
         return "redirect:/admin";
     }
 
     @DeleteMapping("/{id}")
-    public String deleteUser(@ModelAttribute(name = "user") User user, @PathVariable("id") long id) {
+    public String deleteUser(@PathVariable("id") long id) {
         userService.delete(id);
         return "redirect:/admin";
     }

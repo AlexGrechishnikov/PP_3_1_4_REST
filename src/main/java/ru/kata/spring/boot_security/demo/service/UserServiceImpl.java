@@ -15,17 +15,14 @@ import java.util.Set;
 @Service
 public class UserServiceImpl implements UserService {
     private final UserDao userDao;
-    private final PasswordEncoder encoder;
 
-    public UserServiceImpl(UserDao userDao, PasswordEncoder encoder) {
+    public UserServiceImpl(UserDao userDao) {
         this.userDao = userDao;
-        this.encoder = encoder;
     }
 
     @Transactional
     @Override
     public void add(User user) {
-        user.setPassword(encoder.encode(user.getPassword()));
         userDao.add(user);
     }
 

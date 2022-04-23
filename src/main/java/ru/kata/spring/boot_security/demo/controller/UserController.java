@@ -13,6 +13,6 @@ public class UserController {
     public String getUser(ModelMap model, Authentication authentication) {
         User principal = (User) authentication.getPrincipal();
         model.addAttribute(principal);
-        return "user1";
+        return "userPage";
     }
 }
