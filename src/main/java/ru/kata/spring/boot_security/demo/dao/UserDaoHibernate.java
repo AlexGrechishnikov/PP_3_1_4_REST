@@ -2,6 +2,9 @@ package ru.kata.spring.boot_security.demo.dao;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Repository;
+import ru.kata.spring.boot_security.demo.exceptions.CreateUserException;
+import ru.kata.spring.boot_security.demo.exceptions.DuplicateEmailException;
+import ru.kata.spring.boot_security.demo.exceptions.UserNotFoundException;
 import ru.kata.spring.boot_security.demo.model.Role;
 import ru.kata.spring.boot_security.demo.model.User;
 
@@ -20,20 +23,27 @@ public class UserDaoHibernate implements UserDao {
     }
 
     @Override
-    public void add(User user) {
-        manager.merge(user);
+    public User add(User user) throws DuplicateEmailException {
+        checkEmailDuplicate(user);
+        manager.persist(user);
+        manager.flush();
+        return user;
     }
 
     @Override
-    public User get(long id) {
+    public User get(long id) throws UserNotFoundException {
         return manager
                 .createQuery("select u from User u where u.id=:id", User.class)
                 .setParameter("id", id)
-                .getSingleResult();
+                .getResultStream().findFirst().orElseThrow(() -> new UserNotFoundException(id));
     }
 
     @Override
-    public void update(User user) {
+    public void update(User user) throws CreateUserException {
+        User saved = manager.find(User.class, user.getId());
+        if (!user.getEmail().equals(saved.getEmail())) {
+            checkEmailDuplicate(user);
+        }
         manager.merge(user);
     }
 
@@ -64,5 +74,16 @@ public class UserDaoHibernate implements UserDao {
         return new HashSet<>(manager
                 .createQuery("select r from Role r", Role.class)
                 .getResultList());
+    }
+
+    private void checkEmailDuplicate(User user) throws DuplicateEmailException {
+        manager.clear();
+        manager
+                .createQuery("select u from User u where u.email=:e", User.class)
+                .setParameter("e", user.getEmail())
+                .getResultStream()
+                .findFirst()
+                .ifPresent(x-> {
+                    throw new DuplicateEmailException(x.getEmail() + " already exists");});
     }
 }

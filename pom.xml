@@ -73,6 +73,13 @@
 			<artifactId>thymeleaf-extras-springsecurity5</artifactId>
 			<version>3.0.4.RELEASE</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.webjars.bower/jquery -->
+		<dependency>
+			<groupId>org.webjars.bower</groupId>
+			<artifactId>jquery</artifactId>
+			<version>3.6.0</version>
+		</dependency>
+
 
 
 

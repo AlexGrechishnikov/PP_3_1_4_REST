@@ -1,34 +1,44 @@
 package ru.kata.spring.boot_security.demo.model;
 
+import com.fasterxml.jackson.annotation.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import ru.kata.spring.boot_security.demo.json.View;
 
 import javax.persistence.*;
 import javax.validation.constraints.*;
 import java.util.Collection;
 import java.util.Set;
 
+@JsonIdentityInfo(
+        generator = ObjectIdGenerators.PropertyGenerator.class,
+        property  = "id",
+        scope     = Long.class)
 @Entity
 @Table(name = "users")
 public class User implements UserDetails {
 
+    @JsonView(View.UI.class)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonView(View.UI.class)
     @NotEmpty(message = "Поле не должно быть пустым")
     @Size(min = 2, max = 20, message = "Допустимая длинна от 2 до 20 символов")
     private String name;
 
+    @JsonView(View.UI.class)
     @NotEmpty(message = "Поле не должно быть пустым")
     @Size(min = 2, max = 20, message = "Допустимая длинна от 2 до 20 символов")
     private String lastName;
 
+    @JsonView(View.UI.class)
     @Positive(message = "Поле не должно быть пустым")
     @Max(value = 127, message = "Не может быть больше 127")
     private byte age;
 
-
+    @JsonView(View.UI.class)
     @ManyToMany(cascade = CascadeType.MERGE)
     @JoinTable(
             name = "users_roles",
@@ -36,10 +46,13 @@ public class User implements UserDetails {
             inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"))
     private Set<Role> roles;
 
+    @JsonView(View.REST.class)
     @NotEmpty(message = "Пароль не должен быть пустым")
     @Size(min = 2, message = "Минимальная длинна 2 символа")
     private String password;
 
+    @Column(unique = true)
+    @JsonView(View.UI.class)
     @NotEmpty(message = "Поле не должно быть пустым")
     @Email( regexp = "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$",message = "Некорректный e-mail")
     private String email;
@@ -98,8 +111,15 @@ public class User implements UserDetails {
 
     @Override
     public String toString() {
-        return String.format("User{id='%d', name='%s', lastName='%s', age='%d'",
-                id, name, lastName, age);
+        return new StringBuilder("User{")
+                .append("id='").append(id).append("', ")
+                .append("name='").append(name).append("', ")
+                .append("lastName='").append(lastName).append("', ")
+                .append("age='").append(age).append("', ")
+                .append("roles='").append(roles).append("', ")
+                .append("email='").append(email).append("', ")
+                .append("password='").append(password).append("'}")
+                .toString();
     }
 
     public String getName() {
@@ -152,5 +172,23 @@ public class User implements UserDetails {
 
     public String getEmail() {
         return email;
+    }
+
+    public void updateFrom(User updateUser) {
+        if (updateUser.name != null) {
+            this.name = updateUser.name;
+        }
+        if (updateUser.lastName != null) {
+            this.lastName = updateUser.lastName;
+        }
+        if (updateUser.age > 0 && updateUser.age <= 127) {
+            this.age = updateUser.age;
+        }
+        if (updateUser.roles != null && !updateUser.roles.isEmpty()) {
+            this.roles = updateUser.roles;
+        }
+        if (updateUser.email != null) {
+            this.email = updateUser.email;
+        }
     }
 }

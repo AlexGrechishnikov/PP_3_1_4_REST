@@ -1,14 +1,19 @@
 package ru.kata.spring.boot_security.demo.service;
 
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.kata.spring.boot_security.demo.dao.UserDao;
+import ru.kata.spring.boot_security.demo.exceptions.CreateUserException;
+import ru.kata.spring.boot_security.demo.exceptions.DuplicateEmailException;
+import ru.kata.spring.boot_security.demo.exceptions.NonExistingRolesException;
+import ru.kata.spring.boot_security.demo.exceptions.UserNotFoundException;
 import ru.kata.spring.boot_security.demo.model.Role;
 import ru.kata.spring.boot_security.demo.model.User;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -20,21 +25,31 @@ public class UserServiceImpl implements UserService {
         this.userDao = userDao;
     }
 
-    @Transactional
+    @Transactional()
     @Override
-    public void add(User user) {
-        userDao.add(user);
+    public User add(User user) throws DuplicateEmailException {
+        if (user.getId() != null) {
+            user.setId(null);
+        }
+
+        Set<Role> roleSet = getAvailableRoles();
+        Collection<? extends GrantedAuthority> authorities = user.getAuthorities();
+        if (roleSet.containsAll(authorities)) {
+            return userDao.add(user);
+        } else {
+            throw new NonExistingRolesException("Roles from request not exists");
+        }
     }
 
     @Transactional(readOnly = true)
     @Override
-    public User get(long id) {
+    public User get(long id) throws UserNotFoundException {
         return userDao.get(id);
     }
 
     @Transactional
     @Override
-    public void update(User user) {
+    public void update(User user) throws CreateUserException {
         userDao.update(user);
     }
 
@@ -55,10 +70,11 @@ public class UserServiceImpl implements UserService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         UserDetails details = userDao.loadUserByUsername(username);
         if (details == null) {
-            throw new UsernameNotFoundException("Username not found");
+            throw new UsernameNotFoundException(username + " not found");
         }
         return details;
     }
+
     @Transactional
     @Override
     public Set<Role> getAvailableRoles() {

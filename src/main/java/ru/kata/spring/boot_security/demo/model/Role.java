@@ -1,6 +1,8 @@
 package ru.kata.spring.boot_security.demo.model;
 
+import com.fasterxml.jackson.annotation.*;
 import org.springframework.security.core.GrantedAuthority;
+import ru.kata.spring.boot_security.demo.json.View;
 
 import javax.persistence.*;
 import java.util.Objects;
@@ -10,13 +12,16 @@ import java.util.Set;
 @Table(name = "roles")
 public class Role implements GrantedAuthority {
 
+    @JsonView(View.UI.class)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true)
+    @JsonView(View.UI.class)
+    @Column(unique = true, updatable = false)
     private String authority;
 
+    @JsonBackReference
     @ManyToMany(mappedBy = "roles", cascade = CascadeType.MERGE)
     private Set<User> users;
 
